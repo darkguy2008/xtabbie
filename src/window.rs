@@ -199,6 +199,26 @@ fn send_take_focus(conn: &impl Connection, window: Window) {
         None => return,
     };
 
+    // Check if window supports WM_TAKE_FOCUS before sending
+    let prop = match conn
+        .get_property(false, window, wm_protocols, AtomEnum::ATOM, 0, 32)
+        .ok()
+        .and_then(|c| c.reply().ok())
+    {
+        Some(p) => p,
+        None => return,
+    };
+
+    let supports_take_focus = prop
+        .value32()
+        .map(|atoms| atoms.into_iter().any(|a| a == wm_take_focus))
+        .unwrap_or(false);
+
+    if !supports_take_focus {
+        log_fmt!("  Window does not support WM_TAKE_FOCUS, skipping");
+        return;
+    }
+
     let event = ClientMessageEvent::new(
         32,
         window,
