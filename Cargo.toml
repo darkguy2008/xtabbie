@@ -1,0 +1,7 @@
+[package]
+name = "xtabbie"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+x11rb = { version = "0.13", features = ["allow-unsafe-code"] }
