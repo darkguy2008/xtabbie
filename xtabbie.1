@@ -1,0 +1,55 @@
+.TH XTABBIE 1 "January 2026" "xtabbie 0.1.0" "User Commands"
+.SH NAME
+xtabbie \- a simple Alt-Tab window switcher for X11
+.SH SYNOPSIS
+.B xtabbie
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+.B xtabbie
+is a lightweight Alt-Tab replacement that shows window icons in a grid,
+Windows 95 style. It works with TWM and other minimal window managers
+that don't have fancy compositing.
+.PP
+Features:
+.IP \(bu 2
+B&W posterized window icons (or generic icon if none available)
+.IP \(bu 2
+MRU (Most Recently Used) window ordering
+.IP \(bu 2
+Daemon mode with global Alt+Tab grab
+.IP \(bu 2
+Test mode for debugging
+.SH OPTIONS
+.TP
+.B \-\-test
+Run in test mode. In this mode, keyboard navigation is enabled
+with Tab to cycle through windows, Enter to select a window,
+and Escape to cancel. Does not grab Alt+Tab globally.
+.TP
+.B \-\-log
+Enable debug logging. Logs are written to the file specified
+in the FILES section below. The log is cleared each time the
+switcher window is shown. Useful for debugging window activation
+issues.
+.SH FILES
+.TP
+.I $XDG_STATE_HOME/xtabbie/xtabbie.log
+Debug log file when \fB\-\-log\fR is enabled. If XDG_STATE_HOME is not
+set, defaults to \fI~/.local/state/xtabbie/xtabbie.log\fR.
+.SH ENVIRONMENT
+.TP
+.B XDG_STATE_HOME
+Base directory for state files. Defaults to \fI~/.local/state\fR.
+.SH EXAMPLES
+.TP
+Run as a daemon:
+.B xtabbie &
+.TP
+Run in test mode with logging:
+.B xtabbie \-\-test \-\-log
+.SH AUTHOR
+DARKGuy
+.SH SEE ALSO
+.BR twm (1),
+.BR xprop (1),
+.BR xwininfo (1)

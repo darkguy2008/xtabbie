@@ -8,8 +8,9 @@ use x11rb::wrapper::ConnectionExt as _;
 use x11rb::COPY_DEPTH_FROM_PARENT;
 
 use crate::icons::{create_generic_icon, get_window_icon};
+use crate::log;
 use crate::ui::{draw_switcher, Layout, WindowInfo};
-use crate::window::{activate_window, collect_windows_by_zorder};
+use crate::window::{activate_window, collect_windows_by_zorder, log_window_debug_info, should_show_in_switcher};
 
 // X11 keycodes
 const TAB_KEYCODE: u8 = 23;
@@ -39,6 +40,9 @@ pub fn run_test_mode(
     screen: &Screen,
     root: Window,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    log::clear();
+    log_fmt!("=== Test mode started ===");
+
     let switcher = create_switcher_window(conn, screen, root)?;
 
     if switcher.windows.is_empty() {
@@ -128,6 +132,9 @@ fn show_switcher(
     root: Window,
     shift_held: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    log::clear();
+    log_fmt!("=== Switcher activated (shift={}) ===", shift_held);
+
     let switcher = create_switcher_window(conn, screen, root)?;
 
     if switcher.windows.is_empty() {
@@ -238,9 +245,11 @@ fn create_switcher_window(
     screen: &Screen,
     root: Window,
 ) -> Result<SwitcherWindow, Box<dyn std::error::Error>> {
+    log_fmt!("Collecting windows...");
+
     // Gather windows in Z-order (MRU - most recently used first)
     let window_list = collect_windows_by_zorder(conn, root);
-    let windows = deduplicate_windows(conn, window_list);
+    let windows = deduplicate_windows(conn, window_list, root);
 
     // Calculate layout
     let layout = calculate_layout(screen, windows.len());
@@ -257,20 +266,36 @@ fn create_switcher_window(
     })
 }
 
-fn deduplicate_windows(conn: &impl Connection, window_list: Vec<(Window, String)>) -> Vec<WindowInfo> {
+fn deduplicate_windows(conn: &impl Connection, window_list: Vec<(Window, String)>, root: Window) -> Vec<WindowInfo> {
     let generic_icon = create_generic_icon(ICON_SIZE);
     let mut seen_titles = HashSet::new();
     let mut windows = Vec::new();
 
+    log_fmt!("Found {} windows before filtering", window_list.len());
+
     for (wid, title) in window_list {
+        log_window_debug_info(conn, wid, root);
+
+        // Check EWMH filtering first
+        let (should_show, reason) = should_show_in_switcher(conn, wid);
+        if !should_show {
+            log_fmt!("  -> FILTERED OUT ({})", reason);
+            continue;
+        }
+
+        // Then check for duplicate titles
         if seen_titles.insert(title.clone()) {
+            log_fmt!("  -> INCLUDED (unique title)");
             let icon = get_window_icon(conn, wid, ICON_SIZE)
                 .unwrap_or_else(|| generic_icon.scale(ICON_SIZE));
 
             windows.push(WindowInfo { wid, title, icon });
+        } else {
+            log_fmt!("  -> SKIPPED (duplicate title)");
         }
     }
 
+    log_fmt!("Final window count: {}", windows.len());
     windows
 }
 

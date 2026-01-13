@@ -47,7 +47,19 @@ xtabbie &
 
 # Test mode (Enter to select, Escape to cancel)
 xtabbie --test
+
+# Enable debug logging
+xtabbie --log
 ```
+
+## Command Line Options
+
+| Option | Description |
+|--------|-------------|
+| `--test` | Run in test mode (keyboard navigation, Enter to select) |
+| `--log` | Enable debug logging to `~/.local/state/xtabbie/xtabbie.log` |
+
+Options can be combined: `xtabbie --test --log`
 
 ## License
 
